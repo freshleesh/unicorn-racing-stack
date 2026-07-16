@@ -73,7 +73,13 @@ kiss_icp_localization:
     # flip to true then. Params below are pre-set so enabling is a one-line change.
     detect_en: true
     detect_track_filter: true        # reject returns off the track mask (=walls/exterior)
-    detect_track_margin: -0.2        # erode 0.2 m inside the boundary (drop wall returns)
+    detect_track_dist_min: 0.2       # min distance from black/wall [m] to count as a candidate
+    detect_z_max: 0.50               # hard cap on map-frame z [m]; drop returns above (RANSAC-independent)
+    # RANSAC ground-plane removal on the track-filter survivors, refit every frame.
+    detect_ransac_dist_thresh: 0.05  # inlier distance to the fitted plane [m]
+    detect_ransac_iters: 100         # RANSAC iterations
+    detect_ransac_vertical_min: 0.85 # min |n.z()| to accept a candidate plane
+    detect_ransac_min_points: 8      # minimum survivors to even attempt a fit
     detect_res: 0.05                 # BEV cell size [m]
     detect_eps: 0.3                  # DBSCAN neighborhood radius [m]
     detect_min_samples: 2            # 2D scan is sparse -> low core threshold
@@ -87,4 +93,4 @@ kiss_icp_localization:
     publish_2d_map: false
     publish_2d_scan: true
     publish_aligned_scan: true       # /kiss_loc/scan_aligned for RViz debug
-    print_stats: false
+    print_stats: true
