@@ -72,6 +72,7 @@ kiss_icp_localization:
     # is generated AND the 2D-scan detection code path lands (z-band bypass);
     # flip to true then. Params below are pre-set so enabling is a one-line change.
     detect_en: true
+    detect_deskew: false             # feed RAW scan to detection: wrong deskew under hard accel/turn splits the cloud into phantom double sheets
     detect_track_filter: true        # reject returns off the track mask (=walls/exterior)
     detect_track_dist_min: 0.2       # min distance from black/wall [m] to count as a candidate
     detect_z_max: 0.50               # hard cap on map-frame z [m]; drop returns above (RANSAC-independent)
