@@ -30,7 +30,7 @@
   <!-- Obstacle source feeding the tracking->state_machine pipeline:
        scan = the 2D-LiDAR `detect` node (/scan -> /detect/raw_obstacles);
        kiss = the kiss_obstacle_adapter, which turns KISS 3D BEV detections
-       (/kiss_loc/obstacle_poses) into /detect/raw_obstacles -- no 2D scan.
+       (/kiss_loc/obstacle_poses) into /detect/raw_obstacles (no 2D scan).
        car2 (no Hokuyo) uses kiss. Requires localization:=kiss with detect_en:true. -->
   <arg name="detection" default="kiss" description="Obstacle source: kiss (3D BEV adapter, default) | scan (2D detect)"/>
   <arg name="virtual"    default="$(var sim)" description="Inject a virtual opponent + static obstacles (on by default in sim, off on the real car; e.g. virtual:=true to overlay a virtual opponent onto the real LiDAR)"/>
