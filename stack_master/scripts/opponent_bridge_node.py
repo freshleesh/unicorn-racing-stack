@@ -55,10 +55,17 @@ class OpponentBridge(Node):
             return
         self._ok = True
 
-        qos = QoSProfile(depth=10, reliability=ReliabilityPolicy.BEST_EFFORT,
-                         history=HistoryPolicy.KEEP_LAST)
-        self.pub = self.create_publisher(Odometry, self.out_topic, qos)
-        self.create_subscription(Odometry, self.in_topic, self._on_odom, qos)
+        # Publish RELIABLE so the default RViz Odometry display and typical odom
+        # consumers (MPC/planner, default QoS = RELIABLE) receive it without any
+        # per-display QoS override. Subscribe BEST_EFFORT so we accept /car_state/odom
+        # regardless of how the localization stack advertises it (best-effort sub is
+        # compatible with both reliable and best-effort publishers).
+        pub_qos = QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE,
+                             history=HistoryPolicy.KEEP_LAST)
+        sub_qos = QoSProfile(depth=10, reliability=ReliabilityPolicy.BEST_EFFORT,
+                             history=HistoryPolicy.KEEP_LAST)
+        self.pub = self.create_publisher(Odometry, self.out_topic, pub_qos)
+        self.create_subscription(Odometry, self.in_topic, self._on_odom, sub_qos)
 
         # UDP: one socket bound to the shared port, used for both rx and tx.
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
