@@ -23,9 +23,10 @@ kiss_icp_localization:
     imu_topic: "/livox/imu"          # Livox internal IMU (gyro deskew + high-rate prediction)
     imu_en: true
     deskew_en: true                  # gyro deskew
+    deskew_accel: true               # time-varying-v deskew: correct floor doubling under hard accel/brake
     imu_rate_odom: true              # high-rate pose between scans (gyro rot + odom vx)
     imu_init_samples: 100            # static gyro-bias init samples
-    stamp_at_scan_end: true          # livox use_system_timestamp -> header = scan END
+    stamp_at_scan_end: false         # empirically fixes yaw-in-turns (car2-validated); revert to true if car1 yaw regresses
     # Livox MID360 internal IMU -> LiDAR rotation is identity (datasheet).
     extrinsic_R_il: [1.0, 0.0, 0.0,
                      0.0, 1.0, 0.0,
@@ -72,15 +73,13 @@ kiss_icp_localization:
     # is generated AND the 2D-scan detection code path lands (z-band bypass);
     # flip to true then. Params below are pre-set so enabling is a one-line change.
     detect_en: true
-    detect_deskew: false             # feed RAW scan to detection: wrong deskew under hard accel/turn splits the cloud into phantom double sheets
+    detect_deskew: true              # deskew now trustworthy (stamp/accel fix) -> deskewed scan for detection
     detect_track_filter: true        # reject returns off the track mask (=walls/exterior)
     detect_track_dist_min: 0.2       # min distance from black/wall [m] to count as a candidate
-    detect_z_max: 0.50               # hard cap on map-frame z [m]; drop returns above (RANSAC-independent)
-    # RANSAC ground-plane removal on the track-filter survivors, refit every frame.
-    detect_ransac_dist_thresh: 0.05  # inlier distance to the fitted plane [m]
-    detect_ransac_iters: 100         # RANSAC iterations
-    detect_ransac_vertical_min: 0.85 # min |n.z()| to accept a candidate plane
-    detect_ransac_min_points: 8      # minimum survivors to even attempt a fit
+    # Ground/ceiling removal = fixed map-frame z band (RANSAC removed): keep
+    # z_min <= z <= z_max. Below z_min = floor, above z_max = ceiling/overhang.
+    detect_z_min: 0.10               # map-frame floor cut [m]; TUNE from detect_debug (ground=intensity 3)
+    detect_z_max: 0.50               # map-frame ceiling cut [m]
     detect_res: 0.05                 # BEV cell size [m]
     detect_eps: 0.3                  # DBSCAN neighborhood radius [m]
     detect_min_samples: 2            # 2D scan is sparse -> low core threshold
