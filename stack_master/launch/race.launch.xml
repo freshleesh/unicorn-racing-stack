@@ -21,6 +21,12 @@
 <launch>
   <arg name="map"        description="Map name (folder in stack_master/maps/)"/>
   <arg name="sim"        default="false" description="Use simulator (true) or real hardware (false)"/>
+  <!-- Real-car localization stack, forwarded to base_system -> localization.launch.
+       cartographer | pf | kiss. car2 uses kiss (localizes on /livox/lidar, which
+       low_level now starts). Ignored in sim (gym ground truth). Do NOT also launch
+       livox_lidar.launch by hand: low_level brings up the Livox now, so a separate
+       launch double-runs the driver. -->
+  <arg name="localization" default="cartographer" description="Real-car localization: cartographer | pf | kiss"/>
   <arg name="virtual"    default="$(var sim)" description="Inject a virtual opponent + static obstacles (on by default in sim, off on the real car; e.g. virtual:=true to overlay a virtual opponent onto the real LiDAR)"/>
   <arg name="ot_planner" default="predictive_spliner" description="overtake planner the state machine listens to (ROS1 default = predictive_spliner: listens to BOTH /planner/avoidance/otwpnts (dynamic) AND /planner/avoidance/static_otwpnts (static))"/>
   <arg name="control_topic" default="/local_waypoints"
@@ -42,9 +48,10 @@
 
   <!-- ===== Base system: sensors/sim + opponent + raceline + frenet odom ===== -->
   <include file="$(find-pkg-share stack_master)/launch/base_system.launch.xml">
-    <arg name="map"     value="$(var map)"/>
-    <arg name="sim"     value="$(var sim)"/>
-    <arg name="virtual" value="$(var virtual)"/>
+    <arg name="map"          value="$(var map)"/>
+    <arg name="sim"          value="$(var sim)"/>
+    <arg name="localization" value="$(var localization)"/>
+    <arg name="virtual"      value="$(var virtual)"/>
   </include>
 
   <!-- ===== Perception: LiDAR obstacle detection (C++) + tracking (Python) =====
