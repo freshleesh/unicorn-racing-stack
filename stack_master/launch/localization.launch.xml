@@ -17,6 +17,13 @@
   <arg name="use_estop"     default="false"        description="Use emergency stop (true) or not (false)"/>
   <arg name="virtual"       default="false"        description="Inject virtual opponent/obstacles (scan overlay etc.) onto the real LiDAR"/>
   <arg name="keyboard_teleop" default="false"     description="Make the mux honour keyboard teleop (/joy_keyboard); run keyboard_joy_node on the operator laptop"/>
+  <!-- Opponent bridge: pull the other car's /car_state/odom from its ROS_DOMAIN_ID
+       and republish it here as /opponent_state/odom (throttled). Both cars must
+       localize on the SAME map. opponent_domain = the OTHER car's domain (this is
+       car1=domain 1, opponent car2=domain 123). -->
+  <arg name="opponent_bridge" default="true"   description="Bridge the opponent car's pose across ROS domains"/>
+  <arg name="opponent_domain" default="123"    description="The opponent car's ROS_DOMAIN_ID (car2=123)"/>
+  <arg name="opponent_rate"   default="50.0"   description="Republish rate cap for /opponent_state/odom [Hz]"/>
 
   <let name="maps_dir"                value="$(find-pkg-share stack_master)/maps"/>
   <let name="map_path"                value="$(var maps_dir)/$(var map)/$(var map)"/>
@@ -122,6 +129,16 @@
       <param name="track_map_yaml"  value="$(var map_path)_track.yaml"/>
       <param name="loc_2d_map_yaml" value="$(var map_path)_track.yaml"/>
       <param name="ground_yaml"     value="$(var map_path)_ground_lidar.yaml"/>
+    </node>
+  </group>
+
+  <!-- ===== Opponent position bridge (cross-domain) ===== -->
+  <group if="$(var opponent_bridge)">
+    <node pkg="stack_master" exec="opponent_bridge_node.py" name="opponent_bridge" output="screen">
+      <param name="opponent_domain" value="$(var opponent_domain)"/>
+      <param name="in_topic"        value="/car_state/odom"/>
+      <param name="out_topic"       value="/opponent_state/odom"/>
+      <param name="rate"            value="$(var opponent_rate)"/>
     </node>
   </group>
 </launch>
