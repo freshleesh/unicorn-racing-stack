@@ -26,12 +26,13 @@ kiss_icp_localization:
     deskew_accel: true               # time-varying-v deskew: correct floor doubling under hard accel/brake
     imu_rate_odom: true              # high-rate pose between scans (gyro rot + odom vx)
     imu_init_samples: 100            # static gyro-bias init samples
-    # PER-CAR (do not unify): car1's livox_lidar.launch.py includes the stock
-    # msg_MID360_launch.py which HONORS use_system_timestamp -> header = scan END
-    # -> true is correct. car2 launches the driver as a direct Node that IGNORES
-    # use_system_timestamp -> header ~ scan BEGIN -> car2 needs false. The right
-    # value follows the livox launch's stamping, not the car.
-    stamp_at_scan_end: true          # car1 (stock msg_MID360 launch, use_system_timestamp honored)
+    # Default false: EMPIRICALLY verified on car2 (weak-in-turns went away with
+    # false) -- the livox_ros_driver2 stamps the PointCloud2 header near scan
+    # BEGIN, so anchoring the deskew/prediction window to false keeps yaw aligned
+    # through turns. Live-settable (param callback). If a car ever END-stamps
+    # (header ~ publish now()), flip to true -- check with `ros2 topic delay
+    # /livox/lidar` (~0.1s = BEGIN -> false; ~0 = END -> true).
+    stamp_at_scan_end: false         # verified on car2 (yaw-in-turns); default for both
     # Livox MID360 internal IMU -> LiDAR rotation is identity (datasheet).
     extrinsic_R_il: [1.0, 0.0, 0.0,
                      0.0, 1.0, 0.0,
@@ -83,7 +84,7 @@ kiss_icp_localization:
     detect_track_dist_min: 0.2       # min distance from black/wall [m] to count as a candidate
     # Ground/ceiling removal = fixed map-frame z band (RANSAC removed): keep
     # z_min <= z <= z_max. Below z_min = floor, above z_max = ceiling/overhang.
-    detect_z_min: 0.10               # map-frame floor cut [m]; TUNE from detect_debug (ground=intensity 3)
+    detect_z_min: 0.2                # map-frame floor cut [m]; TUNE from detect_debug (ground=intensity 3)
     detect_z_max: 0.50               # map-frame ceiling cut [m]
     # Ego self-return box (SENSOR frame; x forward -> -x is behind the car). Drops
     # the car's own chassis the LiDAR sees behind itself before it clusters as a
