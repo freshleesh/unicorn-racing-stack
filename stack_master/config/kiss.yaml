@@ -85,6 +85,15 @@ kiss_icp_localization:
     # z_min <= z <= z_max. Below z_min = floor, above z_max = ceiling/overhang.
     detect_z_min: 0.10               # map-frame floor cut [m]; TUNE from detect_debug (ground=intensity 3)
     detect_z_max: 0.50               # map-frame ceiling cut [m]
+    # Ego self-return box (SENSOR frame; x forward -> -x is behind the car). Drops
+    # the car's own chassis the LiDAR sees behind itself before it clusters as a
+    # phantom obstacle at the ego pose. ~0.2x0.2 box just behind base_link; all
+    # keys are live-tunable via rqt/ros2 param set (drag onto the self-hit in RViz).
+    detect_self_filter: true
+    detect_self_x_min: -0.45         # behind: box far edge [m]
+    detect_self_x_max: -0.25         # behind: box near edge [m]  (0.2 deep)
+    detect_self_y_min: -0.10         # right edge [m]
+    detect_self_y_max: 0.10          # left edge  [m]  (0.2 wide)
     detect_res: 0.05                 # BEV cell size [m]
     detect_eps: 0.3                  # DBSCAN neighborhood radius [m]
     detect_min_samples: 2            # 2D scan is sparse -> low core threshold
