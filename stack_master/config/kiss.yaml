@@ -26,7 +26,12 @@ kiss_icp_localization:
     deskew_accel: true               # time-varying-v deskew: correct floor doubling under hard accel/brake
     imu_rate_odom: true              # high-rate pose between scans (gyro rot + odom vx)
     imu_init_samples: 100            # static gyro-bias init samples
-    stamp_at_scan_end: false         # empirically fixes yaw-in-turns (car2-validated); revert to true if car1 yaw regresses
+    # PER-CAR (do not unify): car1's livox_lidar.launch.py includes the stock
+    # msg_MID360_launch.py which HONORS use_system_timestamp -> header = scan END
+    # -> true is correct. car2 launches the driver as a direct Node that IGNORES
+    # use_system_timestamp -> header ~ scan BEGIN -> car2 needs false. The right
+    # value follows the livox launch's stamping, not the car.
+    stamp_at_scan_end: true          # car1 (stock msg_MID360 launch, use_system_timestamp honored)
     # Livox MID360 internal IMU -> LiDAR rotation is identity (datasheet).
     extrinsic_R_il: [1.0, 0.0, 0.0,
                      0.0, 1.0, 0.0,
