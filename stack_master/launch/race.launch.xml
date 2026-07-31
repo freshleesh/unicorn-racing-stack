@@ -32,7 +32,7 @@
        kiss = the kiss_obstacle_adapter, which turns KISS 3D BEV detections
        (/kiss_loc/obstacle_poses) into /detect/raw_obstacles -- no 2D scan.
        car2 (no Hokuyo) uses kiss. Requires localization:=kiss with detect_en:true. -->
-  <arg name="detection" default="scan" description="Obstacle source: scan (2D detect) | kiss (3D BEV adapter)"/>
+  <arg name="detection" default="kiss" description="Obstacle source: kiss (3D BEV adapter, default) | scan (2D detect)"/>
   <arg name="virtual"    default="$(var sim)" description="Inject a virtual opponent + static obstacles (on by default in sim, off on the real car; e.g. virtual:=true to overlay a virtual opponent onto the real LiDAR)"/>
   <arg name="ot_planner" default="predictive_spliner" description="overtake planner the state machine listens to (ROS1 default = predictive_spliner: listens to BOTH /planner/avoidance/otwpnts (dynamic) AND /planner/avoidance/static_otwpnts (static))"/>
   <arg name="control_topic" default="/local_waypoints"
