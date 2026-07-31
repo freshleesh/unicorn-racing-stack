@@ -17,13 +17,16 @@
   <arg name="use_estop"     default="false"        description="Use emergency stop (true) or not (false)"/>
   <arg name="virtual"       default="false"        description="Inject virtual opponent/obstacles (scan overlay etc.) onto the real LiDAR"/>
   <arg name="keyboard_teleop" default="false"     description="Make the mux honour keyboard teleop (/joy_keyboard); run keyboard_joy_node on the operator laptop"/>
-  <!-- Opponent bridge: pull the other car's /car_state/odom from its ROS_DOMAIN_ID
-       and republish it here as /opponent_state/odom (throttled). Both cars must
-       localize on the SAME map. opponent_domain = the OTHER car's domain (this is
-       car1=domain 1, opponent car2=domain 123). -->
-  <arg name="opponent_bridge" default="true"   description="Bridge the opponent car's pose across ROS domains"/>
-  <arg name="opponent_domain" default="123"    description="The opponent car's ROS_DOMAIN_ID (car2=123)"/>
-  <arg name="opponent_rate"   default="50.0"   description="Republish rate cap for /opponent_state/odom [Hz]"/>
+  <!-- Opponent bridge: forward our /car_state/odom to the other car over UDP and
+       publish the other car's pose here as /opponent_state/odom (throttled). Both
+       cars must localize on the SAME map. DDS stays local to each car's domain;
+       only UDP crosses machines (their domains are isolated and DDS discovery does
+       not cross this LAN). opponent_ip = the OTHER car's IP (this is car1;
+       opponent is car2 = 192.168.70.14). Update if the DHCP lease changes. -->
+  <arg name="opponent_bridge" default="true"           description="Run the UDP opponent-pose bridge"/>
+  <arg name="opponent_ip"     default="192.168.70.14"  description="The opponent car's LAN IP (car2)"/>
+  <arg name="opponent_port"   default="47600"          description="UDP port (same on both cars)"/>
+  <arg name="opponent_rate"   default="50.0"           description="Send-rate cap [Hz]"/>
 
   <let name="maps_dir"                value="$(find-pkg-share stack_master)/maps"/>
   <let name="map_path"                value="$(var maps_dir)/$(var map)/$(var map)"/>
@@ -135,10 +138,11 @@
   <!-- ===== Opponent position bridge (cross-domain) ===== -->
   <group if="$(var opponent_bridge)">
     <node pkg="stack_master" exec="opponent_bridge_node.py" name="opponent_bridge" output="screen">
-      <param name="opponent_domain" value="$(var opponent_domain)"/>
-      <param name="in_topic"        value="/car_state/odom"/>
-      <param name="out_topic"       value="/opponent_state/odom"/>
-      <param name="rate"            value="$(var opponent_rate)"/>
+      <param name="peer_ip"   value="$(var opponent_ip)"/>
+      <param name="port"      value="$(var opponent_port)"/>
+      <param name="in_topic"  value="/car_state/odom"/>
+      <param name="out_topic" value="/opponent_state/odom"/>
+      <param name="rate"      value="$(var opponent_rate)"/>
     </node>
   </group>
 </launch>
