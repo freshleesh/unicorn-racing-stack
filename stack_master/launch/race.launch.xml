@@ -27,6 +27,12 @@
        livox_lidar.launch by hand: low_level brings up the Livox now, so a separate
        launch double-runs the driver. -->
   <arg name="localization" default="cartographer" description="Real-car localization: cartographer | pf | kiss"/>
+  <!-- Obstacle source feeding the tracking->state_machine pipeline:
+       scan = the 2D-LiDAR `detect` node (/scan -> /detect/raw_obstacles);
+       kiss = the kiss_obstacle_adapter, which turns KISS 3D BEV detections
+       (/kiss_loc/obstacle_poses) into /detect/raw_obstacles -- no 2D scan.
+       car2 (no Hokuyo) uses kiss. Requires localization:=kiss with detect_en:true. -->
+  <arg name="detection" default="scan" description="Obstacle source: scan (2D detect) | kiss (3D BEV adapter)"/>
   <arg name="virtual"    default="$(var sim)" description="Inject a virtual opponent + static obstacles (on by default in sim, off on the real car; e.g. virtual:=true to overlay a virtual opponent onto the real LiDAR)"/>
   <arg name="ot_planner" default="predictive_spliner" description="overtake planner the state machine listens to (ROS1 default = predictive_spliner: listens to BOTH /planner/avoidance/otwpnts (dynamic) AND /planner/avoidance/static_otwpnts (static))"/>
   <arg name="control_topic" default="/local_waypoints"
@@ -58,9 +64,19 @@
        detect publishes /detect/raw_obstacles (Frenet filled at the source);
        tracking reads it and publishes /tracking/obstacles_raw. tracking_merger
        (sim virtual_perception) owns /tracking/obstacles. -->
-  <node pkg="perception" exec="detect" name="detect" output="screen">
+  <!-- scan mode: 2D-LiDAR L-shape detector -> /detect/raw_obstacles -->
+  <node pkg="perception" exec="detect" name="detect" output="screen"
+        if="$(eval '\'$(var detection)\' == \'scan\'')">
     <param from="$(find-pkg-share stack_master)/config/opponent_tracker_params.yaml"/>
     <param name="map" value="$(var map)"/>
+  </node>
+  <!-- kiss mode: KISS 3D BEV detections -> /detect/raw_obstacles (no 2D scan) -->
+  <node pkg="perception" exec="kiss_obstacle_adapter.py" name="kiss_obstacle_adapter" output="screen"
+        if="$(eval '\'$(var detection)\' == \'kiss\'')">
+    <param name="in_topic"        value="/kiss_loc/obstacle_poses"/>
+    <param name="out_topic"       value="/detect/raw_obstacles"/>
+    <param name="waypoints_topic" value="/global_waypoints"/>
+    <param name="obstacle_size"   value="0.5"/>
   </node>
   <!-- with virtual:=true tracking_merger owns /tracking/obstacles, so tracking feeds it
        on /tracking/obstacles_raw; without it, tracking publishes /tracking/obstacles directly -->
