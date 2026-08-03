@@ -25,6 +25,12 @@ kiss_icp_localization:
     deskew_en: true                  # gyro deskew
     deskew_accel: true               # time-varying-v deskew: correct floor doubling under hard accel/brake
     imu_rate_odom: true              # high-rate pose between scans (gyro rot + odom vx)
+    # Constrain IMU/odom propagation to the map XY plane (+ yaw): z/roll/pitch are
+    # held at the last LiDAR fix and set ONLY by the 3D ICP. Fixes the high-speed
+    # z-sink (a pitched attitude leaks forward velocity into a downward world-z
+    # increment; free-running gyro also drifts roll/pitch between scans). Deskew
+    # stays full-3D. Live-tunable.
+    planar_prediction: true
     imu_init_samples: 100            # static gyro-bias init samples
     # Default false: EMPIRICALLY verified on car2 (weak-in-turns went away with
     # false) -- the livox_ros_driver2 stamps the PointCloud2 header near scan
