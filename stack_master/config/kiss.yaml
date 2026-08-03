@@ -1,61 +1,46 @@
-# kiss_icp_localization — 3D / 2.5D Livox voxel-ICP localization on the real car.
-# Publishes the pose DIRECTLY on /car_state/odom (+ TF map->base_link), no EKF.
-#
-# Only keys that DIFFER from the node defaults (or matter for safety / 2.5D / are
-# per-car) are listed here — everything else uses localization_node.cpp defaults.
-# Full rationale + tuning notes live in this package's CLAUDE.md.
-#
-# The ground-band crop (crop_*) is set HERE, not in <map>_ground_lidar.yaml
-# (that auto-load was removed). All crop_* keys are live-tunable (ros2 param set).
+# kiss_icp_localization — 3D / 2.5D Livox voxel-ICP localization (real car).
+# Publishes the pose on /car_state/odom + TF map->base_link (no EKF).
+# Lists only keys that differ from the node defaults (or are per-car); the rest
+# use localization_node.cpp defaults. Rationale + tuning notes: package CLAUDE.md.
 kiss_icp_localization:
   ros__parameters:
-    # ===================== PER-CAR — do NOT whole-file sync between cars =========
-    # car1 (mac) and car2 (nuc) differ here. When deploying, change ONLY these keys;
-    # never scp the whole file (it silently reverts the other car's values).
-    stamp_at_scan_end: false     # car1: true (stock msg_MID360 END-stamps) | car2: false (direct-node BEGIN-stamps)
-    adaptive_range: 15.0         # car1: 15.0 | car2: 60.0   (15 tightens threshold -> lock-loss risk)
-    sensor_height: 0.158         # LiDAR mount height above ground [m] (lifts map ground to grid z=0).
-                                 # car1: 0.158 | car2: measure via `tf2_echo map base_link`
+    # --- per-car: change ONLY these when deploying; never scp the whole file ---
+    stamp_at_scan_end: false   # car1: true (msg_MID360 END-stamps) | car2: false (direct node)
+    adaptive_range: 15.0       # car1: 15 | car2: 60  (low value tightens threshold -> lock loss)
+    sensor_height: 0.158       # LiDAR height above ground [m]; car1: 0.158 | car2: tf2_echo map base_link
 
-    # ===================== mode ==================================================
-    input_mode: "3d"             # "3d" (full scan) | "2.5d" (keep floor..crop_z_max only)
+    # --- mode ---
+    input_mode: "3d"           # "3d" (full scan) | "2.5d" (keep only floor..crop_z_max)
 
-    # ===================== ground-band crop (2.5D input + detection band viz) ====
-    # Height of a point above ground = crop_ground_normal . p + crop_ground_offset.
-    # 2.5D keeps points with height <= crop_z_max (floor kept); crop_z_min is the
-    # lower bound used by the 2D band / band viz. normal+offset = the LiDAR mount
-    # tilt vs ground (measured from GLIM on the ifac recording; re-measure per car
-    # if the mount changes). All live-tunable.
+    # --- ground-band crop (2.5D + detection band); live-tunable, source of truth ---
+    # height above ground = crop_ground_normal . p + crop_ground_offset.
+    # normal/offset = LiDAR mount tilt (GLIM-measured on ifac; remeasure if remounted).
     crop_ground_normal: [-0.257637, -0.011867, 0.966169]
     crop_ground_offset: 0.1378
-    crop_z_min: 0.15
-    crop_z_max: 0.3
+    crop_z_min: 0.15           # lower bound (2D band only)
+    crop_z_max: 0.3            # upper cut (the 2.5D knob)
 
-    # ===================== I/O (non-default) =====================================
-    odom_topic: "/car_state/odom"    # default is /kiss_loc/odometry — MUST override for the stack
-    odom_twist_topic: "/vesc/odom"   # wheel twist.vx -> translation prediction
+    # --- I/O ---
+    odom_topic: "/car_state/odom"    # default /kiss_loc/odometry — must override for the stack
+    odom_twist_topic: "/vesc/odom"   # wheel vx -> translation prediction
 
-    # ===================== prediction / deskew (non-default) =====================
-    planar_prediction: true      # propagate only map xy+yaw; z/roll/pitch from LiDAR ICP only
+    # --- prediction ---
+    planar_prediction: true    # propagate only map xy+yaw; z/roll/pitch from LiDAR ICP
 
-    # (divergence gate + speed/accel bounds are hardcoded in the node — not params.)
-
-    # ===================== BEV detection (opponents / unmapped obstacles) ========
+    # --- BEV detection (opponents / obstacles) ---
     detect_en: true
-    detect_track_filter: true    # reject returns off the track mask (walls/exterior)
-    detect_z_min: 0.2            # detection z-band (MAP frame) — separate from crop_z_* above
+    detect_track_filter: true  # drop returns off the track mask (walls/exterior)
+    detect_z_min: 0.2          # detection z-band, MAP frame (separate from crop_z_*)
     detect_z_max: 0.50
-    detect_res: 0.05             # BEV cell size [m]
-    detect_eps: 0.3              # DBSCAN neighborhood radius [m]
-    detect_min_samples: 2        # sparse scan -> low core threshold
-    # Ego self-return box, SENSOR frame (x forward -> -x behind). ~0.2x0.2 behind
-    # base_link; drag onto the self-hit live in RViz.
-    detect_self_filter: true
+    detect_res: 0.05           # BEV cell size [m]
+    detect_eps: 0.3            # DBSCAN radius [m]
+    detect_min_samples: 2      # sparse scan -> low core threshold
+    detect_self_filter: true   # drop ego chassis: box in SENSOR frame (x fwd, -x behind)
     detect_self_x_min: -0.45
     detect_self_x_max: -0.25
     detect_self_y_min: -0.10
     detect_self_y_max: 0.10
 
-    # ===================== output / debug =======================================
-    publish_2d_map: false        # map_server owns /map
-    print_stats: true            # STAT lines for bag_validation / tuning
+    # --- output ---
+    publish_2d_map: false      # map_server owns /map
+    print_stats: true          # STAT lines for bag_validation / tuning
