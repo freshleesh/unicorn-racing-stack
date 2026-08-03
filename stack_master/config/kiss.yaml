@@ -38,12 +38,7 @@ kiss_icp_localization:
     # ===================== prediction / deskew (non-default) =====================
     planar_prediction: true      # propagate only map xy+yaw; z/roll/pitch from LiDAR ICP only
 
-    # ===================== registration safety envelope =========================
-    reject_trans: 2.0            # divergence gate: reject a fix jumping > this [m]
-    reject_rot_deg: 30.0         #                  ... or > this [deg] from prediction
-    reject_recover_count: 3      # consecutive rejects before re-anchoring to the fix
-    max_velocity: 15.0           # speed cap (corridor-degenerate runaway guard) [m/s]
-    max_accel: 10.0              # accel cap [m/s^2]
+    # (divergence gate + speed/accel bounds are hardcoded in the node — not params.)
 
     # ===================== BEV detection (opponents / unmapped obstacles) ========
     detect_en: true
