@@ -130,11 +130,11 @@
       <!-- The node reads explicit file paths (it does NOT derive them from a map
            name), so inject them from the active map folder here. map_path =
            maps_dir/<map>/<map>. 3D mode (input_mode:3d) loads map_pcd_3d; the
-           track mask + ground plane feed detection / ground-band geometry. -->
+           track mask feeds detection. The ground-band crop (crop_*) is set in
+           kiss.yaml now, so no ground_lidar.yaml is injected. -->
       <param name="map_pcd_3d"      value="$(var map_path).pcd"/>
       <param name="track_map_yaml"  value="$(var map_path)_track.yaml"/>
       <param name="loc_2d_map_yaml" value="$(var map_path)_track.yaml"/>
-      <param name="ground_yaml"     value="$(var map_path)_ground_lidar.yaml"/>
     </node>
   </group>
 
