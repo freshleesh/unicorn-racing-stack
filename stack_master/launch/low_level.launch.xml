@@ -159,7 +159,7 @@
     <param from="$(var vehicle_config)"/>
     <param name="in_topic"      value="/vesc/high_level/ackermann_cmd"/>
     <param name="out_topic"     value="/vesc/ackermann_cmd"/>
-    <param name="joy_max_speed" value="4.0"/>
+    <param name="joy_max_speed" value="$(env JOY_MAX_SPEED 4.0)"/>   <!-- per-car: set JOY_MAX_SPEED in unicorn.local.sh (car1=7); default 4.0 -->
     <param name="use_estop" value="$(var use_estop)"/>
     <param name="sim" value="$(var sim)"/>
     <!-- start honouring /joy_keyboard immediately when keyboard teleop is on -->
