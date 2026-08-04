@@ -27,6 +27,10 @@ kiss_icp_localization:
     # --- prediction ---
     planar_prediction: true    # propagate only map xy+yaw; z/roll/pitch from LiDAR ICP
 
+    # --- registration (ICP aggressiveness; all live-tunable) ---
+    icp_kernel_scale: 2.0      # Geman-McClure width = th/scale; lower pulls harder on far residuals (snaps 2.5D along-track offsets)
+    min_threshold: 0.3         # correspondence-radius floor kept at convergence (was 0.1)
+
     # --- BEV detection (opponents / obstacles) ---
     detect_en: true
     detect_track_filter: true  # drop returns off the track mask (walls/exterior)
