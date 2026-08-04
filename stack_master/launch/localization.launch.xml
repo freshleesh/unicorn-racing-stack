@@ -116,25 +116,19 @@
     </node>
   </group>
 
-  <!-- ===== KISS-ICP 2D scan-to-SDF localization ===== -->
+  <!-- ===== KISS-ICP 3D / 2.5D voxel-ICP localization ===== -->
   <!-- No EKF: the node fuses wheel-odom (translation) + gyro (rotation) itself and
        publishes the fused pose DIRECTLY on /car_state/odom + TF map->base_link.
-       Topic names are matched in kiss.yaml (no remap). Two separate maps are
-       injected from the active map folder: loc_2d_map_yaml = <map>.yaml (the
-       cartographer occupancy grid, used for scan-to-SDF localization) and
-       track_map_yaml = <map>_track.yaml (the drivable-region mask for BEV
-       detection; generated separately, only read when detect_en:true). -->
+       Topic names are matched in kiss.yaml (no remap). -->
   <group if="$(eval '\'$(var localization)\' == \'kiss\'')">
     <node pkg="kiss_icp_localization" exec="localization_node" name="kiss_icp_localization" output="screen">
       <param from="$(find-pkg-share stack_master)/config/kiss.yaml"/>
       <!-- The node reads explicit file paths (it does NOT derive them from a map
            name), so inject them from the active map folder here. map_path =
-           maps_dir/<map>/<map>. 3D mode (input_mode:3d) loads map_pcd_3d; the
-           track mask feeds detection. The ground-band crop (crop_*) is set in
-           kiss.yaml now, so no ground_lidar.yaml is injected. -->
+           maps_dir/<map>/<map>. map_pcd_3d is the ICP target; track mask feeds
+           detection. The ground-band crop (crop_*) is set in kiss.yaml. -->
       <param name="map_pcd_3d"      value="$(var map_path).pcd"/>
       <param name="track_map_yaml"  value="$(var map_path)_track.yaml"/>
-      <param name="loc_2d_map_yaml" value="$(var map_path)_track.yaml"/>
     </node>
   </group>
 
