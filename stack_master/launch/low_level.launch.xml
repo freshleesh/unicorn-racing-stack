@@ -46,7 +46,7 @@
   <arg name="virtual"        default="$(var sim)"          description="Inject virtual opponent/obstacles into the perception stack"/>
 
   <!-- map paths (needed by the simulator and by virtual_perception in both sim and real) -->
-  <let name="maps_dir" value="$(find-pkg-share stack_master)/maps"/>
+  <let name="maps_dir" value="$(env STACK_MASTER_MAPS_ROOT $(find-pkg-share stack_master)/maps)"/>
   <let name="map_path" value="$(var maps_dir)/$(var map)/$(var map)"/>
 
   <!-- ========== REAL HARDWARE SENSORS ========== -->

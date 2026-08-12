@@ -31,7 +31,7 @@
   <arg name="opponent_port"   default="47600"          description="UDP port (same on both cars)"/>
   <arg name="opponent_rate"   default="50.0"           description="Send-rate cap [Hz]"/>
 
-  <let name="maps_dir"                value="$(find-pkg-share stack_master)/maps"/>
+  <let name="maps_dir"                value="$(env STACK_MASTER_MAPS_ROOT $(find-pkg-share stack_master)/maps)"/>
   <let name="map_path"                value="$(var maps_dir)/$(var map)/$(var map)"/>
   <let name="cartographer_config_dir" value="$(find-pkg-share stack_master)/config"/>
 
