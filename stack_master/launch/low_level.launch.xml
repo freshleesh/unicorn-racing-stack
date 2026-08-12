@@ -24,7 +24,7 @@
        livox network (host 192.168.1.2, see livox_ros_driver2/config/MID360_config.json).
        The wrapper launch also fixes macOS DYLD_LIBRARY_PATH for the plugin dlopen. -->
   <arg name="livox"                default="true" description="Start the Livox MID-360 driver on the real car"/>
-  <arg name="use_system_timestamp" default="true" description="Livox stamp source: true=ROS now() (mapping), false=device HW clock (LIO-only)"/>
+  <arg name="use_system_timestamp" default="false" description="Livox stamp source: false=device HW clock (epoch after mac driver fix; matches car2, header=scan BEGIN -> kiss stamp_at_scan_end=false). true=ROS now() at publish (scan END)."/>
   <!-- see3cam via opencv_cam. macOS denies /dev/video access to processes not
        attached to a GUI session (SSH is one such case); headless:=true skips
        the camera node for exactly that situation, leave false on a GUI login. -->

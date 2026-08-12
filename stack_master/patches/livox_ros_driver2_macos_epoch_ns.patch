@@ -1,0 +1,35 @@
+# livox_ros_driver2 — macOS epoch-ns timestamp fix (car1 / mac mini)
+#
+# WHY: the mac's livox_ros_driver2 (vendored from github.com/Livox-SDK/livox_ros_driver2,
+# not a pushable fork -> preserved here as a patch) stamped per-point/IMU base time with
+# std::chrono::high_resolution_clock, which on macOS aliases steady_clock = device UPTIME
+# (not epoch). Right after a mac reboot uptime is < 1e12 ns (~16.7 min), so kiss_icp's
+# per-point time-unit heuristic read the ns as seconds and inflated rel_time ~1e9x -> gyro
+# deskew smeared each scan into a RING (intermittent, until uptime crossed 16.7 min).
+# Linux's high_resolution_clock == system_clock (epoch ns), so car2 never hit this.
+#
+# FIX: use system_clock (epoch) AND duration_cast<nanoseconds> — macOS system_clock::period
+# is microseconds (Linux is ns), so .count() alone would be 1000x too small on mac.
+# Result matches car2 (Linux) epoch-ns exactly, and header/TF/odom stamps are valid epoch.
+#
+# APPLY (on the mac): cd src/sensor/livox_ros_driver2 && patch -p1 < this_file, then
+#   colcon build --packages-select livox_ros_driver2
+# Linux hosts don't need it (system_clock is already epoch-ns) but it's a safe no-op there.
+# Paired with: kiss span-based unit inference (kiss_icp_localization) + low_level.launch.xml
+# use_system_timestamp=false + kiss.yaml stamp_at_scan_end=false.
+--- a/src/comm/pub_handler.cpp
++++ b/src/comm/pub_handler.cpp
+@@ -269,7 +269,14 @@ uint64_t PubHandler::GetEthPacketTimestamp(uint8_t timestamp_type, uint8_t* time
+     return time.stamp;
+   }
+
+-  return std::chrono::high_resolution_clock::now().time_since_epoch().count();
++  // per-point/IMU base time in epoch NANOSECONDS. Two platform pitfalls:
++  // (1) high_resolution_clock aliases steady_clock on macOS = device UPTIME,
++  //     not epoch (gave ~3e11 ns). Use system_clock (epoch) instead.
++  // (2) system_clock::period is us on macOS but ns on Linux, so .count() alone
++  //     would be 1000x too small on mac. duration_cast<nanoseconds> forces ns
++  //     on both. Result matches car2 (Linux) epoch-ns exactly.
++  return std::chrono::duration_cast<std::chrono::nanoseconds>(
++      std::chrono::system_clock::now().time_since_epoch()).count();
+ }
