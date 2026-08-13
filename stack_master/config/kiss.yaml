@@ -11,6 +11,7 @@ kiss_icp_localization:
 
     # --- mode ---
     input_mode: "3d"           # "3d" (full scan) | "2.5d" (keep only floor..crop_z_max)
+    map_max_points_per_voxel: 0  # 0 = 캡 없음(맵 pcd 밀도 그대로 로드; 파이프라인 stratification이 밀도 제어). >0이면 voxel당 상한
 
     # --- ground-band crop (2.5D + detection band); live-tunable, source of truth ---
     # height above ground = crop_ground_normal . p + crop_ground_offset.
